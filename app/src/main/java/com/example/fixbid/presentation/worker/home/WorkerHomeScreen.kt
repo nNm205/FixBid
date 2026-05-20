@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -71,10 +72,11 @@ fun WorkerHomeScreen(
                 WorkerJobsTab(
                     activeJobs = uiState.activeJobs,
                     pendingJobs = uiState.pendingJobs,
+                    completedJobs = uiState.completedJobs,
                     isLoading = uiState.isLoading,
                     onJobClick = onJobClick,
                     onStartJob = viewModel::startJob,
-                    onCompleteJob = viewModel::completeJob
+                    onCompleteJob = onJobClick
                 )
             }
             3 -> Box(modifier = Modifier.padding(innerPadding)) {
@@ -147,7 +149,7 @@ fun WorkerHomeScreen(
                                     ActiveJobsSection(
                                         jobs = uiState.activeJobs,
                                         onJobClick = onJobClick,
-                                        onCompleteJob = viewModel::completeJob
+                                        onCompleteJob = onJobClick
                                     )
                                 }
 
@@ -410,15 +412,27 @@ private fun ActiveJobsSection(
         }
         Spacer(modifier = Modifier.height(10.dp))
         jobs.forEach { booking ->
-            JobCard(
-                booking = booking,
-                statusColor = Color(0xFF2196F3),
-                statusLabel = "Đang làm",
-                actionLabel = "Hoàn thành",
-                actionColor = AccentGreen,
-                onActionClick = { onCompleteJob(booking.id) },
-                onClick = { onJobClick(booking.id) }
-            )
+            if (booking.status == com.example.fixbid.domain.model.BookingStatus.PENDING_COMPLETION) {
+                JobCard(
+                    booking = booking,
+                    statusColor = Color(0xFFE65100),
+                    statusLabel = "Chờ xác nhận",
+                    actionLabel = "Đang chờ khách xác nhận",
+                    actionColor = Color(0xFFBDBDBD),
+                    onActionClick = { /* disabled - waiting for customer */ },
+                    onClick = { onJobClick(booking.id) }
+                )
+            } else {
+                JobCard(
+                    booking = booking,
+                    statusColor = Color(0xFF2196F3),
+                    statusLabel = "Đang làm",
+                    actionLabel = "Báo cáo hoàn thành",
+                    actionColor = AccentGreen,
+                    onActionClick = { onCompleteJob(booking.id) },
+                    onClick = { onJobClick(booking.id) }
+                )
+            }
             Spacer(modifier = Modifier.height(10.dp))
         }
     }
@@ -727,11 +741,15 @@ private fun EmptyJobsCard() {
 private fun WorkerJobsTab(
     activeJobs: List<Booking>,
     pendingJobs: List<Booking>,
+    completedJobs: List<Booking>,
     isLoading: Boolean,
     onJobClick: (String) -> Unit,
     onStartJob: (String) -> Unit,
     onCompleteJob: (String) -> Unit
 ) {
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val tabs = listOf("Đang thực hiện", "Đã hoàn thành")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -754,6 +772,61 @@ private fun WorkerJobsTab(
             )
         }
 
+        // Tab Row
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Color.White,
+            contentColor = PrimaryBlue,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                    height = 3.dp,
+                    color = PrimaryBlue
+                )
+            },
+            divider = {}
+        ) {
+            tabs.forEachIndexed { index, title ->
+                val count = when (index) {
+                    0 -> activeJobs.size + pendingJobs.size
+                    else -> completedJobs.size
+                }
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = title,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selectedTab == index) PrimaryBlue else TextSecondary,
+                                fontSize = 14.sp
+                            )
+                            if (count > 0) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (selectedTab == index) PrimaryBlue else Color(0xFFE0E0E0)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = count.toString(),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selectedTab == index) Color.White else TextSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        }
+
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -761,47 +834,105 @@ private fun WorkerJobsTab(
             ) {
                 CircularProgressIndicator(color = PrimaryBlue)
             }
-        } else if (activeJobs.isEmpty() && pendingJobs.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Outlined.WorkOff,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        "Không có việc làm nào",
-                        color = TextSecondary,
-                        fontSize = 15.sp
-                    )
-                }
-            }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (activeJobs.isNotEmpty()) {
-                    ActiveJobsSection(
-                        jobs = activeJobs,
-                        onJobClick = onJobClick,
-                        onCompleteJob = onCompleteJob
-                    )
+            when (selectedTab) {
+                0 -> {
+                    // Active tab
+                    if (activeJobs.isEmpty() && pendingJobs.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Outlined.WorkOff,
+                                    contentDescription = null,
+                                    tint = TextSecondary.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "Không có việc đang thực hiện",
+                                    color = TextSecondary,
+                                    fontSize = 15.sp
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            if (activeJobs.isNotEmpty()) {
+                                ActiveJobsSection(
+                                    jobs = activeJobs,
+                                    onJobClick = onJobClick,
+                                    onCompleteJob = onCompleteJob
+                                )
+                            }
+                            if (pendingJobs.isNotEmpty()) {
+                                PendingJobsSection(
+                                    jobs = pendingJobs,
+                                    onJobClick = onJobClick,
+                                    onStartJob = onStartJob
+                                )
+                            }
+                        }
+                    }
                 }
-                if (pendingJobs.isNotEmpty()) {
-                    PendingJobsSection(
-                        jobs = pendingJobs,
-                        onJobClick = onJobClick,
-                        onStartJob = onStartJob
-                    )
+                1 -> {
+                    // Completed tab
+                    if (completedJobs.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Outlined.CheckCircleOutline,
+                                    contentDescription = null,
+                                    tint = TextSecondary.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "Chưa có việc hoàn thành",
+                                    color = TextSecondary,
+                                    fontSize = 15.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "Các công việc đã hoàn thành sẽ hiển thị ở đây",
+                                    color = TextSecondary.copy(alpha = 0.7f),
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            completedJobs.forEach { booking ->
+                                JobCard(
+                                    booking = booking,
+                                    statusColor = AccentGreen,
+                                    statusLabel = "Hoàn thành",
+                                    actionLabel = "Xem chi tiết",
+                                    actionColor = PrimaryBlue,
+                                    onActionClick = { onJobClick(booking.id) },
+                                    onClick = { onJobClick(booking.id) }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
                 }
             }
         }

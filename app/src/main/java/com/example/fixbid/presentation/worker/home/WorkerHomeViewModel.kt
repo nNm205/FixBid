@@ -26,6 +26,7 @@ data class WorkerHomeUiState(
     val profile: WorkerProfile? = null,
     val activeJobs: List<Booking> = emptyList(),
     val pendingJobs: List<Booking> = emptyList(),
+    val completedJobs: List<Booking> = emptyList(),
     val completedCount: Int = 0,
     val totalEarnings: Double = 0.0,
     val monthlyEarnings: Double = 0.0,
@@ -66,6 +67,7 @@ class WorkerHomeViewModel @Inject constructor(
                             profile = data.profile,
                             activeJobs = data.activeJobs,
                             pendingJobs = data.pendingJobs,
+                            completedJobs = data.completedJobs,
                             completedCount = data.completedCount,
                             totalEarnings = data.totalEarnings,
                             monthlyEarnings = data.monthlyEarnings
@@ -118,7 +120,7 @@ class WorkerHomeViewModel @Inject constructor(
 
     fun completeJob(bookingId: String) {
         viewModelScope.launch {
-            when (updateJobStatusUseCase(bookingId, BookingStatus.COMPLETED)) {
+            when (updateJobStatusUseCase(bookingId, BookingStatus.PENDING_COMPLETION)) {
                 is Resource.Success -> loadDashboard()
                 else -> { /* TODO: show error */ }
             }

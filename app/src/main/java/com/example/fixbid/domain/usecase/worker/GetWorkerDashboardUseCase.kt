@@ -14,6 +14,7 @@ data class WorkerDashboardData(
     val profile: WorkerProfile?,
     val activeJobs: List<Booking>,
     val pendingJobs: List<Booking>,
+    val completedJobs: List<Booking>,
     val completedCount: Int,
     val totalEarnings: Double,
     val monthlyEarnings: Double
@@ -64,6 +65,7 @@ class GetWorkerDashboardUseCase @Inject constructor(
                 profile = profile,
                 activeJobs = allActiveJobs,
                 pendingJobs = confirmedJobs,
+                completedJobs = completedJobs,
                 completedCount = completedJobs.size + (profile?.totalJobsDone ?: 0),
                 totalEarnings = totalEarnings,
                 monthlyEarnings = monthlyEarnings

@@ -118,7 +118,7 @@ class WorkerHomeViewModel @Inject constructor(
 
     fun completeJob(bookingId: String) {
         viewModelScope.launch {
-            when (updateJobStatusUseCase(bookingId, BookingStatus.COMPLETED)) {
+            when (updateJobStatusUseCase(bookingId, BookingStatus.PENDING_COMPLETION)) {
                 is Resource.Success -> loadDashboard()
                 else -> { /* TODO: show error */ }
             }

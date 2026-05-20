@@ -17,6 +17,7 @@ import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.decodeRecord
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.buildJsonObject
@@ -106,9 +107,9 @@ class BookingRepositoryImpl @Inject constructor(
         runCatching {
             val result = client.postgrest[Tables.BOOKINGS].update(
                 buildJsonObject {
-                    put("status", "completed")
+                    put("status", "pending_completion")
                     workerNote?.let { put("worker_note", it) }
-                    put("updated_at", System.currentTimeMillis().toString())
+                    put("updated_at", java.time.Instant.now().toString())
                 }
             ) {
                 filter { eq("id", bookingId) }
@@ -116,6 +117,39 @@ class BookingRepositoryImpl @Inject constructor(
             }.decodeSingle<BookingDto>()
             Resource.Success(result.toDomain())
         }.getOrElse { Resource.Error(it.message ?: "Lỗi") }
+
+    override suspend fun submitJobCompletion(
+        bookingId: String,
+        completionNote: String?,
+        completionImageUrls: List<String>
+    ): Resource<Booking> = runCatching {
+        val result = client.postgrest[Tables.BOOKINGS].update(
+            buildJsonObject {
+                put("status", "pending_completion")
+                completionNote?.let { put("completion_note", it) }
+                put("completion_images", kotlinx.serialization.json.JsonArray(
+                    completionImageUrls.map { kotlinx.serialization.json.JsonPrimitive(it) }
+                ))
+                put("updated_at", java.time.Instant.now().toString())
+            }
+        ) {
+            filter { eq("id", bookingId) }
+            select(Columns.ALL)
+        }.decodeSingle<BookingDto>()
+        Resource.Success(result.toDomain())
+    }.getOrElse { Resource.Error(it.message ?: "Gửi hoàn thành thất bại") }
+
+    override suspend fun uploadCompletionImage(
+        bookingId: String,
+        imageBytes: ByteArray,
+        fileName: String
+    ): Resource<String> = runCatching {
+        val path = "completions/$bookingId/$fileName"
+        val bucket = client.storage.from("booking-images")
+        bucket.upload(path, imageBytes, upsert = true)
+        val publicUrl = bucket.publicUrl(path)
+        Resource.Success(publicUrl)
+    }.getOrElse { Resource.Error(it.message ?: "Upload ảnh thất bại") }
 
     override suspend fun cancelBooking(bookingId: String, reason: String): Resource<Unit> =
         runCatching {

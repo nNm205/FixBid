@@ -410,15 +410,27 @@ private fun ActiveJobsSection(
         }
         Spacer(modifier = Modifier.height(10.dp))
         jobs.forEach { booking ->
-            JobCard(
-                booking = booking,
-                statusColor = Color(0xFF2196F3),
-                statusLabel = "Đang làm",
-                actionLabel = "Báo cáo hoàn thành",
-                actionColor = AccentGreen,
-                onActionClick = { onCompleteJob(booking.id) },
-                onClick = { onJobClick(booking.id) }
-            )
+            if (booking.status == com.example.fixbid.domain.model.BookingStatus.PENDING_COMPLETION) {
+                JobCard(
+                    booking = booking,
+                    statusColor = Color(0xFFE65100),
+                    statusLabel = "Chờ xác nhận",
+                    actionLabel = "Đang chờ khách xác nhận",
+                    actionColor = Color(0xFFBDBDBD),
+                    onActionClick = { /* disabled - waiting for customer */ },
+                    onClick = { onJobClick(booking.id) }
+                )
+            } else {
+                JobCard(
+                    booking = booking,
+                    statusColor = Color(0xFF2196F3),
+                    statusLabel = "Đang làm",
+                    actionLabel = "Báo cáo hoàn thành",
+                    actionColor = AccentGreen,
+                    onActionClick = { onCompleteJob(booking.id) },
+                    onClick = { onJobClick(booking.id) }
+                )
+            }
             Spacer(modifier = Modifier.height(10.dp))
         }
     }

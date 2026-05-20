@@ -71,14 +71,19 @@ fun JobDetailScreen(
         bottomBar = {
             uiState.data?.let { data ->
                 val booking = data.booking
-                if (booking.status == BookingStatus.IN_PROGRESS) {
-                    // Show "Hoàn thành" button for active jobs
-                    CompletionBottomBar(onCompleteClick = viewModel::openCompletionDialog)
-                } else {
-                    JobDetailBottomBar(
-                        myBid = data.myBid,
-                        onPlaceBid = viewModel::openBidDialog
-                    )
+                when (booking.status) {
+                    BookingStatus.IN_PROGRESS -> {
+                        CompletionBottomBar(onCompleteClick = viewModel::openCompletionDialog)
+                    }
+                    BookingStatus.PENDING_COMPLETION -> {
+                        PendingCompletionBottomBar()
+                    }
+                    else -> {
+                        JobDetailBottomBar(
+                            myBid = data.myBid,
+                            onPlaceBid = viewModel::openBidDialog
+                        )
+                    }
                 }
             }
         },
@@ -749,6 +754,38 @@ private fun CompletionBottomBar(onCompleteClick: () -> Unit) {
                     fontSize = 15.sp
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun PendingCompletionBottomBar() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.White,
+        shadowElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                Icons.Outlined.HourglassTop,
+                contentDescription = null,
+                tint = Color(0xFFE65100),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Đang chờ khách hàng xác nhận hoàn thành",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFFE65100)
+            )
         }
     }
 }

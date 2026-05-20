@@ -146,7 +146,9 @@ class BookingRepositoryImpl @Inject constructor(
     ): Resource<String> = runCatching {
         val path = "completions/$bookingId/$fileName"
         val bucket = client.storage.from("booking-images")
-        bucket.upload(path, imageBytes, upsert = true)
+        bucket.upload(path, imageBytes) {
+            upsert = true
+        }
         val publicUrl = bucket.publicUrl(path)
         Resource.Success(publicUrl)
     }.getOrElse { Resource.Error(it.message ?: "Upload ảnh thất bại") }

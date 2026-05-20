@@ -74,7 +74,7 @@ fun WorkerHomeScreen(
                     isLoading = uiState.isLoading,
                     onJobClick = onJobClick,
                     onStartJob = viewModel::startJob,
-                    onCompleteJob = viewModel::completeJob
+                    onCompleteJob = onJobClick
                 )
             }
             3 -> Box(modifier = Modifier.padding(innerPadding)) {
@@ -147,7 +147,7 @@ fun WorkerHomeScreen(
                                     ActiveJobsSection(
                                         jobs = uiState.activeJobs,
                                         onJobClick = onJobClick,
-                                        onCompleteJob = viewModel::completeJob
+                                        onCompleteJob = onJobClick
                                     )
                                 }
 
@@ -414,7 +414,7 @@ private fun ActiveJobsSection(
                 booking = booking,
                 statusColor = Color(0xFF2196F3),
                 statusLabel = "Đang làm",
-                actionLabel = "Hoàn thành",
+                actionLabel = "Báo cáo hoàn thành",
                 actionColor = AccentGreen,
                 onActionClick = { onCompleteJob(booking.id) },
                 onClick = { onJobClick(booking.id) }

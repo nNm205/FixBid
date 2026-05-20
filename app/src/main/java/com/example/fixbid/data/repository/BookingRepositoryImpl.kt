@@ -125,6 +125,35 @@ class BookingRepositoryImpl @Inject constructor(
             Resource.Success(Unit)
         }.getOrElse { Resource.Error(it.message ?: "Hủy thất bại") }
 
+    override suspend fun confirmCompletion(bookingId: String): Resource<Booking> =
+        runCatching {
+            val result = client.postgrest[Tables.BOOKINGS].update(
+                buildJsonObject {
+                    put("status", "completed")
+                    put("updated_at", java.time.Instant.now().toString())
+                }
+            ) {
+                filter { eq("id", bookingId) }
+                select(Columns.ALL)
+            }.decodeSingle<BookingDto>()
+            Resource.Success(result.toDomain())
+        }.getOrElse { Resource.Error(it.message ?: "Xác nhận hoàn thành thất bại") }
+
+    override suspend fun rejectCompletion(bookingId: String, reason: String): Resource<Booking> =
+        runCatching {
+            val result = client.postgrest[Tables.BOOKINGS].update(
+                buildJsonObject {
+                    put("status", "in_progress")
+                    put("customer_note", reason)
+                    put("updated_at", java.time.Instant.now().toString())
+                }
+            ) {
+                filter { eq("id", bookingId) }
+                select(Columns.ALL)
+            }.decodeSingle<BookingDto>()
+            Resource.Success(result.toDomain())
+        }.getOrElse { Resource.Error(it.message ?: "Từ chối hoàn thành thất bại") }
+
     override suspend fun getBookingById(bookingId: String): Resource<Booking> =
         runCatching {
             val result = client.postgrest[Tables.BOOKINGS]

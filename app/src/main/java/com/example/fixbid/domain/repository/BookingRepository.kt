@@ -29,6 +29,10 @@ interface BookingRepository {
     suspend fun startJob(bookingId: String): Resource<Booking>
     suspend fun completeJob(bookingId: String, workerNote: String?): Resource<Booking>
 
+    // Customer – completion confirmation
+    suspend fun confirmCompletion(bookingId: String): Resource<Booking>
+    suspend fun rejectCompletion(bookingId: String, reason: String): Resource<Booking>
+
     // Shared
     suspend fun getBookingById(bookingId: String): Resource<Booking>
     fun observeBooking(bookingId: String): Flow<Booking?>

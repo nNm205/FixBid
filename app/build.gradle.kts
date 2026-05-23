@@ -38,6 +38,10 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"${resolveProp("SUPABASE_URL")}\"")
         buildConfigField("String", "SUPABASE_API_KEY", "\"${resolveProp("SUPABASE_API_KEY")}\"")
+
+        // VNPay Sandbox
+        buildConfigField("String", "VNPAY_TMN_CODE", "\"${resolveProp("VNPAY_TMN_CODE")}\"")
+        buildConfigField("String", "VNPAY_HASH_SECRET", "\"${resolveProp("VNPAY_HASH_SECRET")}\"")
     }
 
     buildTypes {

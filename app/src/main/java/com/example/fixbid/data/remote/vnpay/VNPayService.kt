@@ -24,10 +24,10 @@ import javax.inject.Singleton
 class VNPayService @Inject constructor() {
 
     companion object {
-        // VNPay Sandbox config
+        // VNPay Sandbox config - đọc từ BuildConfig (local.properties)
         const val VNP_PAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-        const val VNP_TMN_CODE = "FIXBID01"           // Thay bằng TmnCode sandbox thực tế
-        const val VNP_HASH_SECRET = "VNPAY_HASH_SECRET_SANDBOX" // Thay bằng HashSecret sandbox thực tế
+        val VNP_TMN_CODE: String get() = BuildConfig.VNPAY_TMN_CODE
+        val VNP_HASH_SECRET: String get() = BuildConfig.VNPAY_HASH_SECRET
         const val VNP_RETURN_URL = "fixbid://vnpay-return"      // Deep link callback
         const val VNP_VERSION = "2.1.0"
         const val VNP_COMMAND = "pay"

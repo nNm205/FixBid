@@ -14,4 +14,13 @@ interface PaymentRepository {
     suspend fun confirmCashPayment(bookingId: String): Resource<Payment>
     suspend fun getPaymentByBooking(bookingId: String): Resource<Payment>
     suspend fun getPaymentHistory(userId: String): Resource<List<Payment>>
+
+    // VNPay escrow flow
+    suspend fun updatePaymentToEscrow(
+        paymentId: String,
+        transactionId: String
+    ): Resource<Payment>
+
+    suspend fun releaseEscrow(bookingId: String): Resource<Payment>
+    suspend fun refundPayment(bookingId: String, reason: String): Resource<Payment>
 }

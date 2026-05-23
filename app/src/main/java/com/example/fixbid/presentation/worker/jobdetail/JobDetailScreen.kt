@@ -579,6 +579,14 @@ private fun JobDetailBottomBar(
                     }
                 }
 
+                // Khách đã chọn thợ, đang chờ thanh toán
+                BookingStatus.AWAITING_PAYMENT -> {
+                    StatusInfoRow(
+                        isPositive = false,
+                        text = "Khách đang tiến hành thanh toán. Vui lòng chờ."
+                    )
+                }
+
                 // Thợ đã được chọn → vào làm việc
                 BookingStatus.CONFIRMED -> {
                     Column {

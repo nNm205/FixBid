@@ -461,6 +461,7 @@ private fun getStatusInfo(status: BookingStatus): StatusInfo {
     val isDark = isSystemInDarkTheme()
     return when (status) {
         BookingStatus.BIDDING -> StatusInfo("Chờ báo giá", if (isDark) Color(0xFF4DB6AC) else Color(0xFF00897B))
+        BookingStatus.AWAITING_PAYMENT -> StatusInfo("Chờ thanh toán", if (isDark) Color(0xFFFFB74D) else Color(0xFFF57C00))
         BookingStatus.PENDING -> StatusInfo("Chờ xác nhận", if (isDark) Color(0xFFFFD54F) else Color(0xFFFFA000))
         BookingStatus.CONFIRMED -> StatusInfo("Đã xác nhận", if (isDark) Color(0xFF64B5F6) else Color(0xFF1565C0))
         BookingStatus.IN_PROGRESS -> StatusInfo("Đang làm", if (isDark) Color(0xFFBA68C8) else Color(0xFF6A1B9A))

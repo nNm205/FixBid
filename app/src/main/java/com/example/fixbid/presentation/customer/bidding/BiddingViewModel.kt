@@ -10,9 +10,11 @@ import com.example.fixbid.domain.repository.BidRepository
 import com.example.fixbid.domain.repository.BookingRepository
 import com.example.fixbid.domain.repository.WorkerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +22,11 @@ sealed class BiddingUiState {
     object Loading : BiddingUiState()
     data class Success(val bids: List<Bid>) : BiddingUiState()
     data class Error(val message: String) : BiddingUiState()
+}
+
+sealed interface BiddingEvent {
+    data class NavigateToPayment(val bookingId: String) : BiddingEvent
+    data class Toast(val message: String) : BiddingEvent
 }
 
 @HiltViewModel
@@ -40,6 +47,9 @@ class BiddingViewModel @Inject constructor(
 
     private val _isLoadingProfile = MutableStateFlow(false)
     val isLoadingProfile: StateFlow<Boolean> = _isLoadingProfile.asStateFlow()
+
+    private val _events = Channel<BiddingEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     init {
         loadBids()
@@ -90,9 +100,12 @@ class BiddingViewModel @Inject constructor(
                 is Resource.Success -> {
                     // Reload bids to reflect the change
                     loadBids()
+                    // Navigate to payment screen
+                    _events.trySend(BiddingEvent.Toast("Đã chọn thợ! Vui lòng thanh toán."))
+                    _events.trySend(BiddingEvent.NavigateToPayment(bookingId))
                 }
                 is Resource.Error -> {
-                    // Could show a toast/snackbar, for now just reload
+                    _events.trySend(BiddingEvent.Toast(result.message))
                     loadBids()
                 }
                 is Resource.Loading -> { /* no-op */ }

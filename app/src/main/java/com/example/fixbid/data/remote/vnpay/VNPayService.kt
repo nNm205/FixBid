@@ -1,5 +1,6 @@
 package com.example.fixbid.data.remote.vnpay
 
+import android.util.Log
 import com.example.fixbid.BuildConfig
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
@@ -24,6 +25,7 @@ import javax.inject.Singleton
 class VNPayService @Inject constructor() {
 
     companion object {
+        private const val TAG = "VNPayService"
         const val VNP_PAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
         const val VNP_RETURN_URL = "fixbid://vnpay-return"
         const val VNP_VERSION = "2.1.0"
@@ -33,18 +35,12 @@ class VNPayService @Inject constructor() {
         const val VNP_ORDER_TYPE = "other"
     }
 
-    // Đọc từ BuildConfig (local.properties) - không dùng const vì BuildConfig không phải compile-time constant
+    // Đọc từ BuildConfig (local.properties)
     private val vnpTmnCode: String get() = BuildConfig.VNPAY_TMN_CODE
     private val vnpHashSecret: String get() = BuildConfig.VNPAY_HASH_SECRET
 
     /**
      * Tạo URL thanh toán VNPay.
-     *
-     * @param orderId - Mã đơn hàng (paymentId)
-     * @param amount - Số tiền (VND, không có phần thập phân)
-     * @param orderInfo - Mô tả đơn hàng
-     * @param ipAddress - IP khách hàng (có thể dùng "127.0.0.1" cho mobile)
-     * @return Payment URL hoàn chỉnh để redirect user
      */
     fun createPaymentUrl(
         orderId: String,
@@ -65,7 +61,7 @@ class VNPayService @Inject constructor() {
             "vnp_Version" to VNP_VERSION,
             "vnp_Command" to VNP_COMMAND,
             "vnp_TmnCode" to vnpTmnCode,
-            "vnp_Amount" to (amount * 100).toString(), // VNPay yêu cầu amount * 100
+            "vnp_Amount" to (amount * 100).toString(),
             "vnp_CurrCode" to VNP_CURRENCY_CODE,
             "vnp_TxnRef" to orderId,
             "vnp_OrderInfo" to orderInfo,
@@ -77,33 +73,49 @@ class VNPayService @Inject constructor() {
             "vnp_ExpireDate" to expireDate
         )
 
-        // VNPay yêu cầu: tính HMAC trên raw data (KHÔNG URL-encode value)
+        // ====== DEBUG LOG ======
+        Log.d(TAG, "══════════════════════════════════════════")
+        Log.d(TAG, "VNPay Payment URL Generation Debug:")
+        Log.d(TAG, "──────────────────────────────────────────")
+        Log.d(TAG, "TmnCode: '$vnpTmnCode'")
+        Log.d(TAG, "HashSecret: '${vnpHashSecret.take(8)}...${vnpHashSecret.takeLast(4)}' (length=${vnpHashSecret.length})")
+        Log.d(TAG, "──────────────────────────────────────────")
+        Log.d(TAG, "Params (sorted):")
+        params.forEach { (k, v) -> Log.d(TAG, "  $k = $v") }
+        Log.d(TAG, "──────────────────────────────────────────")
+
+        // Tính HMAC trên raw data (KHÔNG URL-encode value)
         val hashData = params.entries.joinToString("&") { (key, value) ->
             "$key=$value"
         }
+        Log.d(TAG, "Hash Data (raw):")
+        Log.d(TAG, hashData)
+        Log.d(TAG, "──────────────────────────────────────────")
 
-        // Calculate HMAC-SHA512 trên raw data
+        // Calculate HMAC-SHA512
         val secureHash = hmacSHA512(vnpHashSecret, hashData)
+        Log.d(TAG, "SecureHash: $secureHash")
+        Log.d(TAG, "──────────────────────────────────────────")
 
         // Build URL cuối cùng với value đã URL-encode
         val queryString = params.entries.joinToString("&") { (key, value) ->
             "$key=${URLEncoder.encode(value, "UTF-8")}"
         }
 
-        return "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash"
+        val fullUrl = "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash"
+        Log.d(TAG, "Full URL:")
+        Log.d(TAG, fullUrl)
+        Log.d(TAG, "══════════════════════════════════════════")
+
+        return fullUrl
     }
 
     /**
      * Xác thực response từ VNPay callback.
-     *
-     * @param params - Map các tham số trả về từ VNPay
-     * @return true nếu chữ ký hợp lệ
      */
     fun verifyReturnUrl(params: Map<String, String>): Boolean {
         val secureHash = params["vnp_SecureHash"] ?: return false
 
-        // Build hash data từ các params (bỏ vnp_SecureHash và vnp_SecureHashType)
-        // VNPay tính hash trên raw value, KHÔNG URL-encode
         val hashParams = params.toSortedMap().filter {
             it.key != "vnp_SecureHash" && it.key != "vnp_SecureHashType"
         }
@@ -113,6 +125,12 @@ class VNPayService @Inject constructor() {
         }
 
         val calculatedHash = hmacSHA512(vnpHashSecret, hashData)
+
+        Log.d(TAG, "Verify Return URL:")
+        Log.d(TAG, "  Received hash: $secureHash")
+        Log.d(TAG, "  Calculated:    $calculatedHash")
+        Log.d(TAG, "  Match: ${secureHash.equals(calculatedHash, ignoreCase = true)}")
+
         return secureHash.equals(calculatedHash, ignoreCase = true)
     }
 

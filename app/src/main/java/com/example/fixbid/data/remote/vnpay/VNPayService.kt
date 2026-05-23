@@ -77,13 +77,18 @@ class VNPayService @Inject constructor() {
             "vnp_ExpireDate" to expireDate
         )
 
-        // Build query string (sorted by key)
+        // VNPay yêu cầu: tính HMAC trên raw data (KHÔNG URL-encode value)
+        val hashData = params.entries.joinToString("&") { (key, value) ->
+            "$key=$value"
+        }
+
+        // Calculate HMAC-SHA512 trên raw data
+        val secureHash = hmacSHA512(vnpHashSecret, hashData)
+
+        // Build URL cuối cùng với value đã URL-encode
         val queryString = params.entries.joinToString("&") { (key, value) ->
             "$key=${URLEncoder.encode(value, "UTF-8")}"
         }
-
-        // Calculate HMAC-SHA512
-        val secureHash = hmacSHA512(vnpHashSecret, queryString)
 
         return "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash"
     }
@@ -98,12 +103,13 @@ class VNPayService @Inject constructor() {
         val secureHash = params["vnp_SecureHash"] ?: return false
 
         // Build hash data từ các params (bỏ vnp_SecureHash và vnp_SecureHashType)
+        // VNPay tính hash trên raw value, KHÔNG URL-encode
         val hashParams = params.toSortedMap().filter {
             it.key != "vnp_SecureHash" && it.key != "vnp_SecureHashType"
         }
 
         val hashData = hashParams.entries.joinToString("&") { (key, value) ->
-            "$key=${URLEncoder.encode(value, "UTF-8")}"
+            "$key=$value"
         }
 
         val calculatedHash = hmacSHA512(vnpHashSecret, hashData)

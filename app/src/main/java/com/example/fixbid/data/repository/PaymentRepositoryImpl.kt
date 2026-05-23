@@ -103,14 +103,10 @@ class PaymentRepositoryImpl @Inject constructor(
             }
             .decodeSingle<PaymentDto>()
 
-        // Cập nhật booking status sang "awaiting_payment"
-        client.from(Tables.BOOKINGS)
-            .update(buildJsonObject {
-                put("status", "confirmed")
-                put("updated_at", Instant.now().toString())
-            }) {
-                filter { eq("id", bookingId) }
-            }
+        // KHÔNG cập nhật booking status ở đây.
+        // Booking giữ nguyên trạng thái "confirmed" (chờ thanh toán).
+        // Chỉ khi webhook SePay xác nhận giao dịch thành công,
+        // backend mới chuyển booking sang "in_progress" (thợ bắt đầu làm).
 
         Resource.Success(updated.toDomain())
     }.getOrElse { Resource.Error(it.message ?: "Tạo thanh toán SePay thất bại") }

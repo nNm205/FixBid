@@ -52,4 +52,21 @@ object SePayConfig {
     // ─── SePay API (dùng cho check status - optional) ───────────────────────
     const val SEPAY_API_BASE_URL = "https://my.sepay.vn/userapi"
     // API Key sẽ được lưu trong local.properties / BuildConfig
+
+    // ─── Webhook Configuration ──────────────────────────────────────────────
+    // Webhook URL cần cấu hình trên SePay Dashboard:
+    // https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/sepay-webhook
+    //
+    // Ví dụ với project hiện tại:
+    // https://tvekjridlosdykhdazvd.supabase.co/functions/v1/sepay-webhook
+    //
+    // Cách cấu hình:
+    // 1. Vào https://my.sepay.vn → Cài đặt → Webhook
+    // 2. Dán URL trên vào ô "Webhook URL"
+    // 3. Bật webhook
+    // 4. (Optional) Đặt Secret Key nếu muốn xác thực
+    //
+    // Khi khách chuyển khoản thành công:
+    //   SePay gọi webhook → Edge Function cập nhật payment (pending → escrow)
+    //   → Booking chuyển sang in_progress → Thợ bắt đầu làm việc
 }

@@ -24,17 +24,18 @@ import javax.inject.Singleton
 class VNPayService @Inject constructor() {
 
     companion object {
-        // VNPay Sandbox config - đọc từ BuildConfig (local.properties)
         const val VNP_PAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-        val VNP_TMN_CODE: String get() = BuildConfig.VNPAY_TMN_CODE
-        val VNP_HASH_SECRET: String get() = BuildConfig.VNPAY_HASH_SECRET
-        const val VNP_RETURN_URL = "fixbid://vnpay-return"      // Deep link callback
+        const val VNP_RETURN_URL = "fixbid://vnpay-return"
         const val VNP_VERSION = "2.1.0"
         const val VNP_COMMAND = "pay"
         const val VNP_CURRENCY_CODE = "VND"
         const val VNP_LOCALE = "vn"
         const val VNP_ORDER_TYPE = "other"
     }
+
+    // Đọc từ BuildConfig (local.properties) - không dùng const vì BuildConfig không phải compile-time constant
+    private val vnpTmnCode: String get() = BuildConfig.VNPAY_TMN_CODE
+    private val vnpHashSecret: String get() = BuildConfig.VNPAY_HASH_SECRET
 
     /**
      * Tạo URL thanh toán VNPay.
@@ -62,7 +63,7 @@ class VNPayService @Inject constructor() {
         val params = sortedMapOf(
             "vnp_Version" to VNP_VERSION,
             "vnp_Command" to VNP_COMMAND,
-            "vnp_TmnCode" to VNP_TMN_CODE,
+            "vnp_TmnCode" to vnpTmnCode,
             "vnp_Amount" to (amount * 100).toString(), // VNPay yêu cầu amount * 100
             "vnp_CurrCode" to VNP_CURRENCY_CODE,
             "vnp_TxnRef" to orderId,
@@ -81,7 +82,7 @@ class VNPayService @Inject constructor() {
         }
 
         // Calculate HMAC-SHA512
-        val secureHash = hmacSHA512(VNP_HASH_SECRET, queryString)
+        val secureHash = hmacSHA512(vnpHashSecret, queryString)
 
         return "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash"
     }
@@ -104,7 +105,7 @@ class VNPayService @Inject constructor() {
             "$key=${URLEncoder.encode(value, "UTF-8")}"
         }
 
-        val calculatedHash = hmacSHA512(VNP_HASH_SECRET, hashData)
+        val calculatedHash = hmacSHA512(vnpHashSecret, hashData)
         return secureHash.equals(calculatedHash, ignoreCase = true)
     }
 

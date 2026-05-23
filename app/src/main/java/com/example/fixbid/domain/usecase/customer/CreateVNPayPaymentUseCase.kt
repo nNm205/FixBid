@@ -49,7 +49,7 @@ class CreateVNPayPaymentUseCase @Inject constructor(
                 Resource.Success(VNPayResult(payment = payment, paymentUrl = paymentUrl))
             }
             is Resource.Error -> Resource.Error(paymentResult.message)
-            is Resource.Loading -> Resource.Loading()
+            Resource.Loading -> Resource.Loading
         }
     }
 }

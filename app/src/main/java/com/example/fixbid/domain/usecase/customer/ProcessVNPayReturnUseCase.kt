@@ -50,7 +50,7 @@ class ProcessVNPayReturnUseCase @Inject constructor(
                 updateResult
             }
             is Resource.Error -> updateResult
-            is Resource.Loading -> Resource.Loading()
+            Resource.Loading -> Resource.Loading
         }
     }
 

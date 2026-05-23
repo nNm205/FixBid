@@ -52,9 +52,10 @@ class VNPayService @Inject constructor() {
         orderInfo: String,
         ipAddress: String = "127.0.0.1"
     ): String {
-        val calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"))
+        val vnTimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+        val calendar = Calendar.getInstance(vnTimeZone)
         val formatter = SimpleDateFormat("yyyyMMddHHmmss", Locale.US)
-        formatter.timeZone = TimeZone.getTimeZone("Etc/GMT+7")
+        formatter.timeZone = vnTimeZone
         val createDate = formatter.format(calendar.time)
 
         calendar.add(Calendar.MINUTE, 15)

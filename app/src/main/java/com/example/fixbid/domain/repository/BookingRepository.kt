@@ -47,5 +47,6 @@ interface BookingRepository {
 
     // Shared
     suspend fun getBookingById(bookingId: String): Resource<Booking>
+    suspend fun updateBookingStatus(bookingId: String, status: String): Resource<Booking>
     fun observeBooking(bookingId: String): Flow<Booking?>
 }

@@ -97,12 +97,16 @@ class BiddingViewModel @Inject constructor(
 
     /**
      * Khách chọn thợ (accept bid).
-     * Sau khi accept thành công, navigate sang màn hình thanh toán.
+     * Sau khi accept thành công:
+     * 1. Update booking status → awaiting_payment
+     * 2. Navigate sang màn hình thanh toán
      */
     fun acceptBid(bidId: String) {
         viewModelScope.launch {
             when (val result = bidRepository.acceptBid(bidId)) {
                 is Resource.Success -> {
+                    // Update booking status to awaiting_payment (override DB trigger if any)
+                    bookingRepository.updateBookingStatus(bookingId, "awaiting_payment")
                     _events.emit(BiddingEvent.Toast("Đã chọn thợ! Vui lòng tiến hành thanh toán."))
                     // Navigate to payment screen
                     _events.emit(BiddingEvent.NavigateToPayment(bookingId))

@@ -38,12 +38,14 @@ class PaymentRepositoryImpl @Inject constructor(
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Resource.Error("Chưa đăng nhập")
 
-        // Lấy workerId từ booking
+        // Lấy workerId từ booking (chỉ select field cần thiết)
         val booking = client.from(Tables.BOOKINGS)
-            .select { filter { eq("id", bookingId) } }
-            .decodeSingle<Map<String, String?>>()
+            .select(io.github.jan.supabase.postgrest.query.Columns.list("worker_id")) {
+                filter { eq("id", bookingId) }
+            }
+            .decodeSingle<WorkerIdHolder>()
 
-        val workerId = booking["worker_id"]
+        val workerId = booking.workerId
             ?: return Resource.Error("Booking chưa có thợ")
 
         val result = client.from(Tables.PAYMENTS)
@@ -66,12 +68,14 @@ class PaymentRepositoryImpl @Inject constructor(
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Resource.Error("Chưa đăng nhập")
 
-        // Lấy workerId từ booking
+        // Lấy workerId từ booking (chỉ select field cần thiết)
         val booking = client.from(Tables.BOOKINGS)
-            .select { filter { eq("id", bookingId) } }
-            .decodeSingle<Map<String, String?>>()
+            .select(io.github.jan.supabase.postgrest.query.Columns.list("worker_id")) {
+                filter { eq("id", bookingId) }
+            }
+            .decodeSingle<WorkerIdHolder>()
 
-        val workerId = booking["worker_id"]
+        val workerId = booking.workerId
             ?: return Resource.Error("Booking chưa có thợ")
 
         // Tạo payment record trước để có ID
@@ -215,3 +219,13 @@ class PaymentRepositoryImpl @Inject constructor(
             Resource.Success(result.map { it.toDomain() })
         }.getOrElse { Resource.Error(it.message ?: "Lỗi tải lịch sử thanh toán") }
 }
+
+/**
+ * Helper class để decode chỉ field worker_id từ booking
+ * (tránh lỗi parse khi decode toàn bộ booking với các field number)
+ */
+@kotlinx.serialization.Serializable
+private data class WorkerIdHolder(
+    @kotlinx.serialization.SerialName("worker_id")
+    val workerId: String? = null
+)

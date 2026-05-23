@@ -27,12 +27,12 @@ class PaymentRepositoryImpl @Inject constructor(
         val userId = client.auth.currentUserOrNull()?.id
             ?: return Resource.Error("Chưa đăng nhập")
 
-        // Lấy workerId từ booking
-        val booking = client.from(Tables.BOOKINGS)
+        // Lấy workerId từ booking (dùng BookingDto vì bảng có nhiều kiểu dữ liệu khác nhau)
+        val bookingDto = client.from(Tables.BOOKINGS)
             .select { filter { eq("id", bookingId) } }
-            .decodeSingle<Map<String, String?>>()
+            .decodeSingle<com.example.fixbid.data.remote.dto.BookingDto>()
 
-        val workerId = booking["worker_id"]
+        val workerId = bookingDto.workerId
             ?: return Resource.Error("Booking chưa có thợ")
 
         val platformFee = amount * 0.10  // 10% phí nền tảng

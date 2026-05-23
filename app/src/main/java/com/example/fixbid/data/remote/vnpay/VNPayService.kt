@@ -147,6 +147,10 @@ class VNPayService @Inject constructor() {
         val secretKey = SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA512")
         hmacSHA512.init(secretKey)
         val hash = hmacSHA512.doFinal(data.toByteArray(Charsets.UTF_8))
-        return hash.joinToString("") { "%02x".format(it) }
+        val sb = StringBuilder(hash.size * 2)
+        for (b in hash) {
+            sb.append(String.format("%02x", b.toInt() and 0xff))
+        }
+        return sb.toString()
     }
 }

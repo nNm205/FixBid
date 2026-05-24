@@ -589,11 +589,10 @@ private fun ActiveWorkSection(
                     BookingStatus.CONFIRMED -> WorkerJobCard(
                         booking = booking,
                         statusColor = StatusOrange,
-                        statusLabel = "Đã xác nhận",
-                        onClick = { onJobClick(booking.id) },
-                        actionLabel = "Bắt đầu",
-                        actionColor = PrimaryBlue,
-                        onActionClick = { onStartJob(booking.id) }
+                        statusLabel = "Chờ khách thanh toán",
+                        onClick = { onJobClick(booking.id) }
+                        // Không cho bấm "Bắt đầu" — chờ khách thanh toán xong
+                        // Khi thanh toán thành công, webhook sẽ chuyển booking → IN_PROGRESS
                     )
                     else -> WorkerJobCard(
                         booking = booking,

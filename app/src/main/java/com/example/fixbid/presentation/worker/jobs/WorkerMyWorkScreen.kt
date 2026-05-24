@@ -212,10 +212,11 @@ private fun ActiveTab(
                 WorkerJobCard(
                     booking = booking,
                     statusColor = StatusOrange,
-                    statusLabel = "Đã xác nhận",
-                    onClick = { onJobClick(booking.id) },
-                    actionLabel = "Bắt đầu làm",
-                    onActionClick = { onStartJob(booking.id) }
+                    statusLabel = "Chờ khách thanh toán",
+                    onClick = { onJobClick(booking.id) }
+                    // Không có actionLabel và onActionClick
+                    // Thợ chỉ được bắt đầu khi booking chuyển sang IN_PROGRESS
+                    // (tức là khách đã thanh toán thành công qua SePay)
                 )
             }
         }

@@ -71,8 +71,13 @@ Deno.serve(async (req: Request) => {
 
     // ─── 3. Trích xuất mã giao dịch từ nội dung CK ──────────────────────
     // Nội dung CK format: "FIXBID XXXXXXXX" (8 ký tự)
+    // Ngân hàng có thể thêm prefix/suffix vào nội dung
+    // VD: "CT DEN:0977788899 FIXBID A1B2C3D4 ND:..." 
+    // Nên cần match linh hoạt
     const content = (payload.content || "").toUpperCase().trim();
-    const match = content.match(/FIXBID\s+([A-Z0-9]{8})/);
+    
+    // Thử match pattern FIXBID + 8 ký tự bất kỳ đâu trong nội dung
+    const match = content.match(/FIXBID\s*([A-Z0-9]{8})/);
 
     if (!match) {
       console.log("Skipping: content does not match FIXBID pattern:", content);

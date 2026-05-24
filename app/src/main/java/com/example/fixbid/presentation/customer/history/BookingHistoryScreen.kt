@@ -378,6 +378,39 @@ private fun BookingCard(
                 }
             }
 
+            if (booking.status == BookingStatus.CONFIRMED) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.Payment,
+                            contentDescription = null,
+                            tint = statusInfo.color,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Bấm để thanh toán",
+                            fontSize = 12.sp,
+                            color = statusInfo.color,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = statusInfo.color,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
             if (booking.status == BookingStatus.PENDING_COMPLETION) {
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
@@ -465,7 +498,7 @@ private fun getStatusInfo(status: BookingStatus): StatusInfo {
     return when (status) {
         BookingStatus.BIDDING -> StatusInfo("Chờ báo giá", if (isDark) Color(0xFF4DB6AC) else Color(0xFF00897B))
         BookingStatus.PENDING -> StatusInfo("Chờ xác nhận", if (isDark) Color(0xFFFFD54F) else Color(0xFFFFA000))
-        BookingStatus.CONFIRMED -> StatusInfo("Đã xác nhận", if (isDark) Color(0xFF64B5F6) else Color(0xFF1565C0))
+        BookingStatus.CONFIRMED -> StatusInfo("Chờ thanh toán", if (isDark) Color(0xFF64B5F6) else Color(0xFF1565C0))
         BookingStatus.IN_PROGRESS -> StatusInfo("Đang làm", if (isDark) Color(0xFFBA68C8) else Color(0xFF6A1B9A))
         BookingStatus.PENDING_COMPLETION -> StatusInfo("Chờ xác nhận hoàn thành", if (isDark) Color(0xFFFF8A65) else Color(0xFFE65100))
         BookingStatus.COMPLETED -> StatusInfo("Hoàn thành", if (isDark) Color(0xFF81C784) else Color(0xFF43A047))

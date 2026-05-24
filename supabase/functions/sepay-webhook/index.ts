@@ -92,7 +92,10 @@ Deno.serve(async (req: Request) => {
 
     // ─── 4. Kết nối Supabase (dùng service role để bypass RLS) ───────────
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // SUPABASE_SERVICE_ROLE_KEY không cho set qua secrets (reserved prefix)
+    // Dùng tên custom: SB_SERVICE_ROLE_KEY
+    const supabaseServiceKey = Deno.env.get("SB_SERVICE_ROLE_KEY") 
+      || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // ─── 5. Tìm payment record theo transfer_content ─────────────────────

@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +50,7 @@ fun BiddingWorkersScreen(
     bookingId: String,
     onBackClick: () -> Unit,
     onWorkerClick: (String) -> Unit,
+    onNavigateToPayment: (String) -> Unit = {},
     viewModel: BiddingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -57,6 +59,19 @@ fun BiddingWorkersScreen(
 
     var showBottomSheet by remember { mutableStateOf(false) }
     var clickedBid by remember { mutableStateOf<Bid?>(null) }
+
+    val context = LocalContext.current
+
+    // Observe navigation events
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is BiddingEvent.NavigateToPayment -> onNavigateToPayment(event.bookingId)
+                is BiddingEvent.Toast ->
+                    android.widget.Toast.makeText(context, event.message, android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {

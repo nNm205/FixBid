@@ -32,6 +32,7 @@ import com.example.fixbid.presentation.customer.bidding.BiddingWorkersScreen
 import com.example.fixbid.presentation.customer.booking.BookingScreen
 import com.example.fixbid.presentation.customer.booking.BookingSuccessScreen
 import com.example.fixbid.presentation.customer.home.HomeScreen
+import com.example.fixbid.presentation.customer.payment.PaymentScreen
 import com.example.fixbid.presentation.worker.home.WorkerHomeScreen
 import com.example.fixbid.presentation.notification.NotificationListScreen
 import com.example.fixbid.ui.theme.FixBidTheme
@@ -205,6 +206,9 @@ fun FixBidNavHost() {
                 onCompletionConfirmClick = { bookingId ->
                     navController.navigate("completion_confirm/$bookingId")
                 },
+                onPaymentClick = { bookingId ->
+                    navController.navigate("payment/$bookingId")
+                },
                 onSignOut = {
                     navController.navigate(AuthRoutes.Welcome) {
                         popUpTo(0) { inclusive = true }
@@ -307,6 +311,9 @@ fun FixBidNavHost() {
                 onBackClick = { navController.popBackStack() },
                 onWorkerClick = { workerId ->
                     /* TODO: Navigate to worker profile */
+                },
+                onNavigateToPayment = { bId ->
+                    navController.navigate("payment/$bId")
                 }
             )
         }
@@ -318,6 +325,19 @@ fun FixBidNavHost() {
             com.example.fixbid.presentation.customer.completion.CompletionConfirmScreen(
                 onBackClick = { navController.popBackStack() },
                 onCompleted = {
+                    navController.popBackStack("home", inclusive = false)
+                }
+            )
+        }
+
+        // ─── Payment screen ──────────────────────────────────────────────
+        composable(
+            route = "payment/{bookingId}",
+            arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
+        ) {
+            PaymentScreen(
+                onBackClick = { navController.popBackStack() },
+                onPaymentComplete = {
                     navController.popBackStack("home", inclusive = false)
                 }
             )

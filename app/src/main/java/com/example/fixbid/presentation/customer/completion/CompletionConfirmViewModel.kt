@@ -7,6 +7,7 @@ import com.example.fixbid.domain.model.Booking
 import com.example.fixbid.domain.model.Resource
 import com.example.fixbid.domain.repository.BookingRepository
 import com.example.fixbid.domain.usecase.customer.ConfirmCompletionUseCase
+import com.example.fixbid.domain.usecase.shared.ReleaseEscrowUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,8 @@ sealed class CompletionConfirmEvent {
 class CompletionConfirmViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val bookingRepository: BookingRepository,
-    private val confirmCompletionUseCase: ConfirmCompletionUseCase
+    private val confirmCompletionUseCase: ConfirmCompletionUseCase,
+    private val releaseEscrowUseCase: ReleaseEscrowUseCase
 ) : ViewModel() {
 
     private val bookingId: String = savedStateHandle.get<String>("bookingId") ?: ""
@@ -77,8 +79,10 @@ class CompletionConfirmViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isSubmitting = true)
             when (val result = confirmCompletionUseCase.confirm(bookingId)) {
                 is Resource.Success -> {
+                    // Giải phóng escrow - chuyển tiền cho thợ
+                    releaseEscrowUseCase(bookingId)
                     _uiState.value = _uiState.value.copy(isSubmitting = false)
-                    _events.emit(CompletionConfirmEvent.Toast("Đã xác nhận hoàn thành!"))
+                    _events.emit(CompletionConfirmEvent.Toast("Đã xác nhận hoàn thành! Tiền đã được chuyển cho thợ."))
                     _events.emit(CompletionConfirmEvent.CompletionConfirmed)
                 }
                 is Resource.Error -> {

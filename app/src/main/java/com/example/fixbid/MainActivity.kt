@@ -231,6 +231,9 @@ fun FixBidNavHost() {
                 onBrowseAllRequestsClick = {
                     navController.navigate("worker_requests")
                 },
+                onWalletClick = {
+                    navController.navigate("worker_wallet")
+                },
                 onSignOut = {
                     navController.navigate(AuthRoutes.Welcome) {
                         popUpTo(0) { inclusive = true }
@@ -307,7 +310,30 @@ fun FixBidNavHost() {
                 onBackClick = { navController.popBackStack() },
                 onWorkerClick = { workerId ->
                     /* TODO: Navigate to worker profile */
+                },
+                onPaymentRequired = { bId ->
+                    navController.navigate("payment/$bId")
                 }
+            )
+        }
+
+        // ─── Payment screens ──────────────────────────────────────────────
+        composable(
+            route = "payment/{bookingId}",
+            arguments = listOf(navArgument("bookingId") { type = NavType.StringType })
+        ) {
+            com.example.fixbid.presentation.customer.payment.PaymentScreen(
+                onBackClick = { navController.popBackStack() },
+                onPaymentComplete = {
+                    navController.popBackStack("home", inclusive = false)
+                }
+            )
+        }
+
+        // ─── Worker Wallet screen ─────────────────────────────────────────
+        composable("worker_wallet") {
+            com.example.fixbid.presentation.worker.wallet.WalletScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 

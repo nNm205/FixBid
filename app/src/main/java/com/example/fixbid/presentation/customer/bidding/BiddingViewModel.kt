@@ -10,8 +10,11 @@ import com.example.fixbid.domain.repository.BidRepository
 import com.example.fixbid.domain.repository.BookingRepository
 import com.example.fixbid.domain.repository.WorkerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,6 +23,10 @@ sealed class BiddingUiState {
     object Loading : BiddingUiState()
     data class Success(val bids: List<Bid>) : BiddingUiState()
     data class Error(val message: String) : BiddingUiState()
+}
+
+sealed class BiddingNavigationEvent {
+    data class GoToPayment(val bookingId: String) : BiddingNavigationEvent()
 }
 
 @HiltViewModel
@@ -40,6 +47,9 @@ class BiddingViewModel @Inject constructor(
 
     private val _isLoadingProfile = MutableStateFlow(false)
     val isLoadingProfile: StateFlow<Boolean> = _isLoadingProfile.asStateFlow()
+
+    private val _navigationEvents = MutableSharedFlow<BiddingNavigationEvent>()
+    val navigationEvents: SharedFlow<BiddingNavigationEvent> = _navigationEvents.asSharedFlow()
 
     init {
         loadBids()
@@ -84,12 +94,15 @@ class BiddingViewModel @Inject constructor(
         _selectedWorkerProfile.value = null
     }
 
+    /**
+     * Chấp nhận báo giá → cập nhật booking status sang AWAITING_PAYMENT → navigate to Payment
+     */
     fun acceptBid(bidId: String) {
         viewModelScope.launch {
             when (val result = bidRepository.acceptBid(bidId)) {
                 is Resource.Success -> {
-                    // Reload bids to reflect the change
-                    loadBids()
+                    // Navigate to payment screen
+                    _navigationEvents.emit(BiddingNavigationEvent.GoToPayment(bookingId))
                 }
                 is Resource.Error -> {
                     // Could show a toast/snackbar, for now just reload

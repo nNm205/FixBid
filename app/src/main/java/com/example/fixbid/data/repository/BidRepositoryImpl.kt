@@ -55,13 +55,38 @@ class BidRepositoryImpl @Inject constructor(
         }.getOrElse { Resource.Error(it.message ?: "Lỗi tải danh sách bid") }
 
     override suspend fun acceptBid(bidId: String): Resource<Bid> = runCatching {
+        // 1. Accept the bid
         val result = client.postgrest[Tables.BIDS]
             .update(buildJsonObject { put("status", "accepted") }) {
                 filter { eq("id", bidId) }
                 select(Columns.ALL)
             }
             .decodeSingle<BidDto>()
-        Resource.Success(result.toDomain())
+
+        val bid = result.toDomain()
+
+        // 2. Update booking: set worker_id, agreed_price, status -> awaiting_payment
+        client.postgrest[Tables.BOOKINGS]
+            .update(buildJsonObject {
+                put("worker_id", bid.workerId)
+                put("agreed_price", bid.proposedPrice)
+                put("status", "awaiting_payment")
+                put("updated_at", java.time.Instant.now().toString())
+            }) {
+                filter { eq("id", bid.bookingId) }
+            }
+
+        // 3. Reject all other pending bids for this booking
+        client.postgrest[Tables.BIDS]
+            .update(buildJsonObject { put("status", "rejected") }) {
+                filter {
+                    eq("booking_id", bid.bookingId)
+                    filter("id", io.github.jan.supabase.postgrest.query.filter.FilterOperator.NEQ, bidId)
+                    eq("status", "pending")
+                }
+            }
+
+        Resource.Success(bid)
     }.getOrElse { Resource.Error(it.message ?: "Chấp nhận thầu thất bại") }
 
     override suspend fun rejectBid(bidId: String): Resource<Unit> = runCatching {

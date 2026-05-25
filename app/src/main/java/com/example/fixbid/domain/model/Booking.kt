@@ -30,7 +30,8 @@ enum class BookingStatus {
     PENDING,             // khách vừa tạo, chờ thợ
     BIDDING,             // đang trong giai đoạn đấu thầu
     CONFIRMED,           // thợ đã xác nhận / khách đã chọn thợ
-    IN_PROGRESS,         // đang làm
+    AWAITING_PAYMENT,    // chờ khách thanh toán (sau khi chọn thợ)
+    IN_PROGRESS,         // đang làm (sau khi thanh toán thành công)
     PENDING_COMPLETION,  // thợ báo xong, chờ khách xác nhận hoàn thành
     COMPLETED,           // hoàn thành, chờ review
     CANCELLED,           // đã hủy

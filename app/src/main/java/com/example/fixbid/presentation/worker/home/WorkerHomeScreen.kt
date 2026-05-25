@@ -41,6 +41,7 @@ fun WorkerHomeScreen(
     onJobClick: (String) -> Unit = {},
     onJobRequestClick: (String) -> Unit = {},
     onBrowseAllRequestsClick: () -> Unit = {},
+    onWalletClick: () -> Unit = {},
     onSignOut: () -> Unit = {},
     showWorkTab: Boolean = false,
     viewModel: WorkerHomeViewModel = hiltViewModel()

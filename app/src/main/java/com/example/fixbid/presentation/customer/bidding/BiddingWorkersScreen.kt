@@ -49,6 +49,7 @@ fun BiddingWorkersScreen(
     bookingId: String,
     onBackClick: () -> Unit,
     onWorkerClick: (String) -> Unit,
+    onPaymentRequired: (String) -> Unit = {},
     viewModel: BiddingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -57,6 +58,15 @@ fun BiddingWorkersScreen(
 
     var showBottomSheet by remember { mutableStateOf(false) }
     var clickedBid by remember { mutableStateOf<Bid?>(null) }
+
+    // Listen for navigation events from ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvents.collect { event ->
+            when (event) {
+                is BiddingNavigationEvent.GoToPayment -> onPaymentRequired(event.bookingId)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {

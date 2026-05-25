@@ -10,6 +10,7 @@ import com.example.fixbid.domain.repository.BidRepository
 import com.example.fixbid.domain.repository.BookingRepository
 import com.example.fixbid.domain.repository.WorkerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -98,17 +99,23 @@ class BiddingViewModel @Inject constructor(
     /**
      * Khách chọn thợ (accept bid).
      * Sau khi accept thành công:
-     * 1. Update booking status → awaiting_payment
-     * 2. Navigate sang màn hình thanh toán
+     * 1. Accept bid (DB trigger có thể tự set booking = confirmed)
+     * 2. Đợi 500ms để trigger DB hoàn tất
+     * 3. Override booking status → awaiting_payment
+     * 4. Navigate sang màn hình thanh toán
+     *
+     * Booking chỉ chuyển sang CONFIRMED sau khi thanh toán VNPay thành công.
      */
     fun acceptBid(bidId: String) {
         viewModelScope.launch {
             when (val result = bidRepository.acceptBid(bidId)) {
                 is Resource.Success -> {
-                    // Update booking status to awaiting_payment (override DB trigger if any)
+                    // Đợi để DB trigger (nếu có) hoàn tất
+                    delay(500)
+                    // Override: set booking về awaiting_payment (chờ thanh toán)
                     bookingRepository.updateBookingStatus(bookingId, "awaiting_payment")
+
                     _events.emit(BiddingEvent.Toast("Đã chọn thợ! Vui lòng tiến hành thanh toán."))
-                    // Navigate to payment screen
                     _events.emit(BiddingEvent.NavigateToPayment(bookingId))
                 }
                 is Resource.Error -> {

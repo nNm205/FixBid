@@ -76,13 +76,10 @@ class VNPayService @Inject constructor() {
         // ====== DEBUG LOG ======
         Log.d(TAG, "══════════════════════════════════════════")
         Log.d(TAG, "VNPay Payment URL Generation Debug:")
-        Log.d(TAG, "──────────────────────────────────────────")
         Log.d(TAG, "TmnCode: '$vnpTmnCode'")
-        Log.d(TAG, "HashSecret: '${vnpHashSecret.take(8)}...${vnpHashSecret.takeLast(4)}' (length=${vnpHashSecret.length})")
-        Log.d(TAG, "──────────────────────────────────────────")
+        Log.d(TAG, "HashSecret length: ${vnpHashSecret.length}")
         Log.d(TAG, "Params (sorted):")
         params.forEach { (k, v) -> Log.d(TAG, "  $k = $v") }
-        Log.d(TAG, "──────────────────────────────────────────")
 
         // Tính HMAC trên raw data (KHÔNG URL-encode value)
         val hashData = params.entries.joinToString("&") { (key, value) ->
@@ -90,19 +87,18 @@ class VNPayService @Inject constructor() {
         }
         Log.d(TAG, "Hash Data (raw):")
         Log.d(TAG, hashData)
-        Log.d(TAG, "──────────────────────────────────────────")
 
         // Calculate HMAC-SHA512
         val secureHash = hmacSHA512(vnpHashSecret, hashData)
-        Log.d(TAG, "SecureHash: $secureHash")
-        Log.d(TAG, "──────────────────────────────────────────")
+        Log.d(TAG, "SecureHash (length=${secureHash.length}): $secureHash")
 
         // Build URL cuối cùng với value đã URL-encode
         val queryString = params.entries.joinToString("&") { (key, value) ->
             "$key=${URLEncoder.encode(value, "UTF-8")}"
         }
 
-        val fullUrl = "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash"
+        // VNPay v2.1.0 yêu cầu thêm vnp_SecureHashType=SHA512 sau vnp_SecureHash
+        val fullUrl = "$VNP_PAY_URL?$queryString&vnp_SecureHash=$secureHash&vnp_SecureHashType=SHA512"
         Log.d(TAG, "Full URL:")
         Log.d(TAG, fullUrl)
         Log.d(TAG, "══════════════════════════════════════════")
@@ -127,8 +123,8 @@ class VNPayService @Inject constructor() {
         val calculatedHash = hmacSHA512(vnpHashSecret, hashData)
 
         Log.d(TAG, "Verify Return URL:")
-        Log.d(TAG, "  Received hash: $secureHash")
-        Log.d(TAG, "  Calculated:    $calculatedHash")
+        Log.d(TAG, "  Received hash:  $secureHash")
+        Log.d(TAG, "  Calculated:     $calculatedHash")
         Log.d(TAG, "  Match: ${secureHash.equals(calculatedHash, ignoreCase = true)}")
 
         return secureHash.equals(calculatedHash, ignoreCase = true)
@@ -143,14 +139,19 @@ class VNPayService @Inject constructor() {
     }
 
     private fun hmacSHA512(key: String, data: String): String {
-        val hmacSHA512 = Mac.getInstance("HmacSHA512")
-        val secretKey = SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA512")
-        hmacSHA512.init(secretKey)
-        val hash = hmacSHA512.doFinal(data.toByteArray(Charsets.UTF_8))
-        val sb = StringBuilder(hash.size * 2)
-        for (b in hash) {
-            sb.append(String.format("%02x", b.toInt() and 0xff))
+        val mac = Mac.getInstance("HmacSHA512")
+        val secretKeySpec = SecretKeySpec(key.toByteArray(Charsets.UTF_8), "HmacSHA512")
+        mac.init(secretKeySpec)
+        val hmacBytes = mac.doFinal(data.toByteArray(Charsets.UTF_8))
+        // Đảm bảo mỗi byte luôn format đúng 2 hex chars
+        val hexString = StringBuilder(hmacBytes.size * 2)
+        for (byte in hmacBytes) {
+            val hex = Integer.toHexString(byte.toInt() and 0xFF)
+            if (hex.length == 1) {
+                hexString.append('0')
+            }
+            hexString.append(hex)
         }
-        return sb.toString()
+        return hexString.toString()
     }
 }

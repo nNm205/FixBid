@@ -222,6 +222,9 @@ fun FixBidNavHost(intent: android.content.Intent? = null) {
                 onCompletionConfirmClick = { bookingId ->
                     navController.navigate("completion_confirm/$bookingId")
                 },
+                onPaymentClick = { bookingId ->
+                    navController.navigate("payment/$bookingId")
+                },
                 onSignOut = {
                     navController.navigate(AuthRoutes.Welcome) {
                         popUpTo(0) { inclusive = true }

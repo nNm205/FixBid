@@ -39,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 fun BookingHistoryScreen(
     onBookingClick: (String) -> Unit,
     onCompletionConfirmClick: (String) -> Unit = {},
+    onPaymentClick: (String) -> Unit = {},
     viewModel: BookingHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -200,6 +201,7 @@ fun BookingHistoryScreen(
                                     onClick = {
                                         when (booking.status) {
                                             BookingStatus.BIDDING -> onBookingClick(booking.id)
+                                            BookingStatus.AWAITING_PAYMENT -> onPaymentClick(booking.id)
                                             BookingStatus.PENDING_COMPLETION -> onCompletionConfirmClick(booking.id)
                                             else -> { /* no action for other statuses */ }
                                         }
@@ -257,6 +259,7 @@ private fun BookingCard(
             .fillMaxWidth()
             .clickable(
                 enabled = booking.status == BookingStatus.BIDDING ||
+                        booking.status == BookingStatus.AWAITING_PAYMENT ||
                         booking.status == BookingStatus.PENDING_COMPLETION,
                 onClick = onClick
             ),
